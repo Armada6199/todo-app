@@ -1,16 +1,20 @@
-import React, { useContext } from 'react'
-import { settingsProvider } from '../../context/settings/settings'
+import React from 'react'
+import { Link } from 'react-router-dom'
+import { Header, Flex } from '@mantine/core'
 
-
-
-export default function Header() {
-     const context = useContext(settingsProvider)
-
-  return (
-       <>
-           <header data-testid="todo-header">
-                 <h1 data-testid="todo-h1">To Do List: {context.incomplete} items pending</h1>
-          </header>
-       </>
-  )
+export default function AppHeader() {
+    return (
+        <Header bg='black' h='65px'  m='auto'>
+            <Flex
+                justify="left"
+                align='center'
+                direction="row"
+                gap={'xl'}
+                h='65px'
+            >
+                <Link style={{ color: "white", textDecoration: 'none' }} to='/'>Home</Link>
+                <Link  data-testid='go-settings'style={{ color: "white", textDecoration: 'none' }} to='/settings'>Edit Settings</Link>
+            </Flex>
+        </Header >
+    )
 }

@@ -1,39 +1,39 @@
-import React, { useContext } from 'react'
-import { settingsProvider } from '../../context/settings/settings'
+import React, { useContext, useState } from 'react'
+import { Card, Text, Badge, Button, Flex, Pagination } from '@mantine/core';
+import { SettingContext } from '../Context/Settings/Settings'
 
 
-export default function List() {
 
-  const list = useContext(settingsProvider)
+export default function List({ list, toggleComplete, deleteItem }) {
 
-  
-  return (
-    <div data-testid = "contianer">
-      {list.final.map(item => {
+    const [currentPage, setCurrentPage] = useState(1)
+    const { settings } = useContext(SettingContext)
 
-        if (item.completed === true) {
-          return (  
-          <div data-testid ="item-cont" className='hide'  key={item.id}>
-            <p>{item.text}</p>
-            <p><small>Assigned to: {item.assignee}</small></p>
-            <p><small>Difficulty: {item.difficulty}</small></p>
-            <div onClick={() => list.toggleComplete(item.id)}>Complete: {item.completed.toString()}</div>
-            <hr />
-          </div>
-            )
-        }
-        
-          return (  
-          <div data-testid ="item-cont"  key={item.id}>
-            <p>{item.text}</p>
-            <p><small>Assigned to: {item.assignee}</small></p>
-            <p><small>Difficulty: {item.difficulty}</small></p>
-            <div onClick={() => list.toggleComplete(item.id)}>Complete: {item.completed.toString()}</div>
-            <hr />
-          </div>
-            )
-      })}
-      
-    </div>
-  )
+    let toRenderList = settings.showDone ? list : list.filter(task => task.complete === false)
+    let startIndex = settings.taskPerPage * (currentPage - 1)
+    let endIndex = startIndex + settings.taskPerPage
+    let currentPageRender = toRenderList ? toRenderList.slice(startIndex, endIndex) : []
+    let PaginationPages = Math.ceil(toRenderList.length / settings.taskPerPage)
+    return (
+        <div>
+            <Pagination onChange={setCurrentPage} m={'20px'} color="green" total={PaginationPages} />
+            {
+                currentPageRender.map(item => (
+                    <Card data-testid='task-card' m='10px' p={"50px"} key={item.id} shadow="sm" padding="lg" radius="md" withBorder>
+                        <Card.Section>
+                            <Flex justify={'space-around'}>
+                                <Text>Task: {item.text}</Text>
+                                <Text>Owner {item.assignee}</Text>
+                                <Text>Difficulty: {item.difficulty}</Text>
+                                <Badge data-testid='btn-done' color={item.complete ? 'green' : 'red'} variant="light" onClick={() => toggleComplete(item.id)}> {item.complete ? 'Done' : 'Incomplete'}</Badge>
+                                <Button onClick={() => { deleteItem(item.id) }} color='red'>Delete</Button>
+                            </Flex>
+                        </Card.Section>
+                    </Card>
+
+                ))
+
+            }
+        </div>
+    )
 }
