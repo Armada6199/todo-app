@@ -3,7 +3,7 @@ import cookie from 'react-cookies';
 import jwt_decode from 'jwt-decode';
 import { initialState, loginReducer } from '../../hooks/Reducer/loginReducer';
 
-const testUsers = {
+const mockUsers = {
   Administrator: {
     password: 'admin',
     name: 'admin',
@@ -36,7 +36,7 @@ function LoginProvider(props) {
   }
 
   async function login(username, password) {
-    const auth = testUsers[username];
+    const auth = mockUsers[username];
     if (auth && auth.password === password) {
       try {
         validateToken(auth.token);
