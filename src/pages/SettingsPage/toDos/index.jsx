@@ -1,91 +1,125 @@
 import React, { useContext, useEffect, useState } from 'react';
 import useForm from '../../../hooks/form';
-
 import { v4 as uuid } from 'uuid';
 import { Title, Grid, Flex, Button, TextInput, Text, Slider } from '@mantine/core';
 import List from '../../../Components/List/List';
 import { ListContext } from '../../../Components/Context/ListOfData/ListOfData';
-
+import LoginForm from '../../../Components/form/login';
+import Auth from '../../../Components/auth';
+import { LoginContext } from '../../../Components/Context/LoginContext';
+import axios from 'axios';
+import SignUp from '../../../Components/form/signup';
 
 const Todo = () => {
   const [defaultValues] = useState({
     difficulty: 4,
   });
-  const { data, dispatch } = useContext(ListContext)
+  const { data, dispatch } = useContext(ListContext);
+  const { can } = useContext(LoginContext);
   const [incomplete, setIncomplete] = useState([]);
   const { handleChange, handleSubmit } = useForm(addItem, defaultValues);
 
-  function addItem(item) {
-    item.id = uuid();
-    item.complete = false;
-    dispatch({ type: 'changeList', payload: item });
+  async function addItem(item) {
+    try {
+      item.completed = false;
+      const res = await axios.post('https://auth-api-fz5h.onrender.com/todo', item);
+      console.log(res);
+      dispatch({ type: 'changeList', payload: item });
+    } catch (err) {
+      console.log('post', err);
+    }
   }
 
-  function deleteItem(id) {
-    const items = data.list.filter(item => item.id !== id);
-    dispatch({ type: 'replaceList', payload: items });
+  async function deleteItem(id) {
+    try {
+      await axios.delete(`https://auth-api-fz5h.onrender.com/todo/${id}`);
+      const items = data.list.filter((item) => item.id !== id);
+      dispatch({ type: 'replaceList', payload: items });
+    } catch (err) {
+      console.log('delete error', err);
+    }
   }
 
-  function toggleComplete(id) {
+  async function toggleComplete(id) {
+    if (can('update')) {
+      const items = await Promise.all(
+        data.list.map(async (item) => {
+          if (item.id === id) {
+            item.completed = !item.completed;
+            try {
+              item.id = id;
+              const res = await axios.put(`https://auth-api-fz5h.onrender.com/todo/${id}`, item);
+              console.log(res, 'ehaaaaaaaaaaaaaaaaaaaaaaaaaaaabo');
+            } catch (err) {
+              console.log('update error', err);
+            }
+          }
+          return item;
+        })
+      );
 
-    const items = data.list.map(item => {
-      if (item.id === id) {
-        item.complete = !item.complete;
-      }
-      return item;
-    });
+      dispatch({ type: 'replaceList', payload: items });
+    }
+  }
 
-    dispatch({ type: 'replaceList', payload: items })
-
+  async function getData() {
+    try {
+      const res = await axios.get('https://auth-api-fz5h.onrender.com/todo');
+      dispatch({ type: 'replaceList', payload: res.data.data });
+    } catch (err) {
+      console.log(err);
+    }
   }
 
   useEffect(() => {
-    let incompleteCount = data.list.filter(item => !item.complete).length;
+    getData();
+  }, []);
+
+  useEffect(() => {
+    let incompleteCount = data.list.filter((item) => !item.completed).length;
     setIncomplete(incompleteCount);
-    document.title = `To Do List: ${incomplete}`;
+    document.title = `To-Do List: ${incomplete}`;
   }, [data.list]);
 
   return (
-    <Flex direction='column' justify='center' align={'center'} mih='80vh'>
-      <Title ta={'left'} c={'black'}  bg={'#E4F1FF'} w='80%' p={"20px"} m={'auto'} mt='20px' data-testid="todo-h1" order={1}> Incomplete Tasks : {incomplete} </Title>
-      <Grid mih={'80vh'} justify='center'  direction="col"  w={'80%'} grow gutter={5} gutterXs="md" gutterMd="xl" gutterXl={50} >
+    <Flex direction="column" justify="center" align="center" minHeight="80vh">
+      <LoginForm />
+      <SignUp />
+      <Auth capability="read">
+        <Title
+          textAlign="center"
+          color="white"
+          background="#343a40"
+          width="80%"
+          padding="20px"
+          margin="auto"
+          style={{ marginBottom: '20px' }}
+          order={1}
+        >
+          To-Do List: {incomplete} items pending
+        </Title>
+      </Auth>
+      <Grid minHeight="80vh" justify="center" width="80%" grow gutter={5} gutterXs="md" gutterMd="xl" gutterXl={50}>
         <Grid.Col span={4}>
-          <form onSubmit={handleSubmit}>
-
-            <h2>Add A Task</h2>
-
-            <TextInput
-              onChange={handleChange}
-              name="text"
-              placeholder="To"
-              label="Task"
-            />
-
-            <TextInput
-              onChange={handleChange}
-              name="assignee"
-              placeholder="name"
-              label="Owner"
-            />
-
-            <Text>Difficulty</Text>
-            <Slider
-              color='indigo'
-              onChange={handleChange}
-              defaultValue={defaultValues.difficulty}
-              step={1}
-              min={1}
-              max={5}
-              name="difficulty"
-            />
-            <Button color='indigo' bg='black' type="submit">Add Task</Button>
-          </form>
+          <Auth capability="create">
+            <form onSubmit={handleSubmit} style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '8px' }}>
+              <h2>Add To-Do Item</h2>
+              <TextInput onChange={handleChange} name="text" placeholder="Task Details" label="To-Do Item" />
+              <TextInput onChange={handleChange} name="assignee" placeholder="For who?" label="Assigned To" />
+              <Text>Difficulty</Text>
+              <Slider color="blue" onChange={handleChange} defaultValue={defaultValues.difficulty} step={1} min={1} max={5} name="difficulty" />
+              <Button color="blue" type="submit" style={{ marginTop: '10px' }}>
+                Add Task
+              </Button>
+            </form>
+          </Auth>
         </Grid.Col>
         <Grid.Col span={8}>
-          <List list={data.list} toggleComplete={toggleComplete} deleteItem={deleteItem} />
+          <Auth capability="read">
+            <List list={data.list} toggleComplete={toggleComplete} deleteItem={deleteItem} />
+          </Auth>
         </Grid.Col>
       </Grid>
-
     </Flex>
   );
 };

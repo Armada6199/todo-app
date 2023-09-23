@@ -7,22 +7,23 @@ import Footer from './Components/Footer/Footer';
 import './App.scss'
 import Settings from './Components/Context/Settings/Settings';
 import ListsSaver from './Components/Context/ListOfData/ListOfData';
-
+import LoginProvider from './Components/Context/LoginContext';
 export default function App() {
-
   return (
     <BrowserRouter>
-      <Settings>
-        <ListsSaver>
-          <AppHeader />
-          <Routes>
-            <Route path='/' element={<Todo />} />
-            <Route path='/settings' element={<SettingPage />} />
-          </Routes>
-          <Footer />
-        </ListsSaver>
-      </Settings>
+      <LoginProvider>
+        <Settings>
+          <ListsSaver>
+            <AppHeader />
+
+            <Routes>
+              <Route path='/' element={<Todo />} />
+              <Route path='/settings' element={<SettingPage />} />
+            </Routes>
+            <Footer />
+          </ListsSaver>
+        </Settings>
+      </LoginProvider>
     </BrowserRouter>
   );
 }
-
